@@ -395,34 +395,6 @@ public class AdapterManagerTest {
     }
 
     @org.junit.Test public void testAdaptMultipleAdapterFactoriesServiceRanking() throws Exception {
-        final ServiceReference firstAdaptable = new ServiceReferenceImpl(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
-        final ServiceReference secondAdaptable = new ServiceReferenceImpl(2, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
-
-        am.activate(this.createMultipleAdaptersComponentContext(firstAdaptable, secondAdaptable));
-
-        AdapterObject first = new AdapterObject(Want.INDIFFERENT);
-        assertNull("Expect no adapter", am.getAdapter(first, ParentInterface.class));
-
-        AdapterObject second = new AdapterObject(Want.INDIFFERENT);
-        assertNull("Expect no adapter", am.getAdapter(second, ParentInterface.class));
-
-        am.bindAdapterFactory(firstAdaptable);
-        am.bindAdapterFactory(secondAdaptable);
-
-        Object adapter = am.getAdapter(first, ParentInterface.class);
-        assertNotNull("Did not get an adapter back for first implementation (from ParentInterface), service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
-
-        adapter = am.getAdapter(first, FirstImplementation.class);
-        assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
-
-        adapter = am.getAdapter(second, SecondImplementation.class);
-        assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
-    }
-
-    @org.junit.Test public void testAdaptMultipleAdapterFactoriesServiceRankingSecondHigherOrder() throws Exception {
         final ServiceReference firstAdaptable = new ServiceReferenceImpl(2, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
         final ServiceReference secondAdaptable = new ServiceReferenceImpl(1, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
 
@@ -438,21 +410,49 @@ public class AdapterManagerTest {
         am.bindAdapterFactory(secondAdaptable);
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
-        assertNotNull("Did not get an adapter back for second implementation (from ParentInterface), service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 1, ", adapter instanceof SecondImplementation);
+        assertNotNull("Did not get an adapter back for first implementation (from ParentInterface), service ranking 2", adapter);
+        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 2, ", adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(first, FirstImplementation.class);
-        assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertNotNull("Did not get an adapter back for first implementation, service ranking 2", adapter);
+        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 2, ", adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, SecondImplementation.class);
-        assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
+        assertNotNull("Did not get an adapter back for second implementation, service ranking 1", adapter);
+        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 1, ", adapter instanceof SecondImplementation);
+    }
+
+    @org.junit.Test public void testAdaptMultipleAdapterFactoriesServiceRankingSecondHigherOrder() throws Exception {
+        final ServiceReference firstAdaptable = new ServiceReferenceImpl(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
+        final ServiceReference secondAdaptable = new ServiceReferenceImpl(2, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
+
+        am.activate(this.createMultipleAdaptersComponentContext(firstAdaptable, secondAdaptable));
+
+        AdapterObject first = new AdapterObject(Want.INDIFFERENT);
+        assertNull("Expect no adapter", am.getAdapter(first, ParentInterface.class));
+
+        AdapterObject second = new AdapterObject(Want.INDIFFERENT);
+        assertNull("Expect no adapter", am.getAdapter(second, ParentInterface.class));
+
+        am.bindAdapterFactory(firstAdaptable);
+        am.bindAdapterFactory(secondAdaptable);
+
+        Object adapter = am.getAdapter(first, ParentInterface.class);
+        assertNotNull("Did not get an adapter back for second implementation (from ParentInterface), service ranking 2", adapter);
         assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+
+        adapter = am.getAdapter(first, FirstImplementation.class);
+        assertNotNull("Did not get an adapter back for first implementation, service ranking 2", adapter);
+        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 2, ", adapter instanceof FirstImplementation);
+
+        adapter = am.getAdapter(second, SecondImplementation.class);
+        assertNotNull("Did not get an adapter back for second implementation, service ranking 1", adapter);
+        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 1, ", adapter instanceof SecondImplementation);
     }
 
     @org.junit.Test public void testAdaptMultipleAdapterFactoriesServiceRankingReverse() throws Exception {
-        final ServiceReference firstAdaptable = new ServiceReferenceImpl(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
-        final ServiceReference secondAdaptable = new ServiceReferenceImpl(2, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
+        final ServiceReference firstAdaptable = new ServiceReferenceImpl(2, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
+        final ServiceReference secondAdaptable = new ServiceReferenceImpl(1, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
 
         am.activate(this.createMultipleAdaptersComponentContext(firstAdaptable, secondAdaptable));
 
@@ -467,16 +467,16 @@ public class AdapterManagerTest {
         am.bindAdapterFactory(firstAdaptable);
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
-        assertNotNull("Did not get an adapter back for first implementation (from ParentInterface), service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertNotNull("Did not get an adapter back for first implementation (from ParentInterface), service ranking 2", adapter);
+        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 2, ", adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(first, FirstImplementation.class);
-        assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertNotNull("Did not get an adapter back for first implementation, service ranking 2", adapter);
+        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 2, ", adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, SecondImplementation.class);
-        assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+        assertNotNull("Did not get an adapter back for second implementation, service ranking 1", adapter);
+        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 1, ", adapter instanceof SecondImplementation);
     }
 
 
