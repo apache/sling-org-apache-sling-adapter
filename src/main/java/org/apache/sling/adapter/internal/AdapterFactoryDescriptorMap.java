@@ -18,6 +18,7 @@
  */
 package org.apache.sling.adapter.internal;
 
+import java.util.Comparator;
 import java.util.TreeMap;
 
 import org.apache.sling.api.adapter.AdapterFactory;
@@ -40,5 +41,17 @@ public class AdapterFactoryDescriptorMap extends
         TreeMap<ServiceReference<AdapterFactory>, AdapterFactoryDescriptor> {
 
     private static final long serialVersionUID = 2L;
+
+    public AdapterFactoryDescriptorMap() {
+        super(new Comparator<ServiceReference<AdapterFactory>>() {
+            @Override
+            public int compare(ServiceReference<AdapterFactory> o1, ServiceReference<AdapterFactory> o2) {
+                // compareTo of ServiceReference implements service-ranking lowest-first/service id highest-first
+                // but we want service-ranking highest-first/service id lowest-first as it is done e.g. for BundleContext.getService
+                // so explicitly reverse the comparison (SLING-7194)
+                return o2.compareTo(o1);
+            }
+        });
+    }
 
 }
