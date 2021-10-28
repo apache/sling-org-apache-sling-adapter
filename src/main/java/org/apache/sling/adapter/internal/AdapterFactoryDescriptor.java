@@ -20,9 +20,7 @@ package org.apache.sling.adapter.internal;
 
 import org.apache.sling.adapter.Adaption;
 import org.apache.sling.api.adapter.AdapterFactory;
-import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.component.ComponentContext;
 
 /**
  * The <code>AdapterFactoryDescriptor</code> is an entry in the
@@ -31,30 +29,20 @@ import org.osgi.service.component.ComponentContext;
  */
 public class AdapterFactoryDescriptor {
 
-    private volatile AdapterFactory factory;
+    private final AdapterFactory factory;
 
     private final String[] adapters;
-
-    private final ServiceReference<AdapterFactory> reference;
-
-    private final ComponentContext context;
 
     private volatile ServiceRegistration<Adaption> adaption;
 
     public AdapterFactoryDescriptor(
-            final ComponentContext context,
-            final ServiceReference<AdapterFactory> reference,
+            final AdapterFactory factory,
             final String[] adapters) {
-        this.reference = reference;
-        this.context = context;
+        this.factory = factory;
         this.adapters = adapters;
     }
 
     public AdapterFactory getFactory() {
-        if ( factory == null ) {
-            factory = context.locateService(
-                    "AdapterFactory", reference);
-        }
         return factory;
     }
 
@@ -66,7 +54,7 @@ public class AdapterFactoryDescriptor {
         return adaption;
     }
 
-    public void setAdaption(ServiceRegistration<Adaption> adaption) {
+    public void setAdaption(final ServiceRegistration<Adaption> adaption) {
         this.adaption = adaption;
     }
 }
