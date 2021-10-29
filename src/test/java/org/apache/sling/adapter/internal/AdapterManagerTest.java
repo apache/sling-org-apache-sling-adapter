@@ -26,11 +26,11 @@ import static org.junit.Assert.assertTrue;
 import java.util.Map;
 
 import org.apache.sling.adapter.Adaption;
-import org.apache.sling.adapter.mock.MockAdapterFactory;
 import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.api.adapter.SlingAdaptable;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -173,7 +173,9 @@ public class AdapterManagerTest {
         assertNull("Expect no adapter", am.getAdapter(data, ITestAdapter.class));
 
         final ServiceReference<AdapterFactory> ref = createServiceReference();
-        am.bindAdapterFactory(new MockAdapterFactory(), ref);
+        final AdapterFactory af = Mockito.mock(AdapterFactory.class);
+        Mockito.when(af.getAdapter(data, ITestAdapter.class)).thenReturn(Mockito.mock(ITestAdapter.class));
+        am.bindAdapterFactory(af, ref);
 
         Object adapter = am.getAdapter(data, ITestAdapter.class);
         assertNotNull(adapter);
@@ -186,7 +188,9 @@ public class AdapterManagerTest {
         assertNull("Expect no adapter", am.getAdapter(data, ITestAdapter.class));
 
         final ServiceReference<AdapterFactory> ref = createServiceReference();
-        am.bindAdapterFactory(new MockAdapterFactory(), ref);
+        final AdapterFactory af = Mockito.mock(AdapterFactory.class);
+        Mockito.when(af.getAdapter(data, ITestAdapter.class)).thenReturn(Mockito.mock(ITestAdapter.class));
+        am.bindAdapterFactory(af, ref);
 
         Object adapter = am.getAdapter(data, ITestAdapter.class);
         assertNotNull(adapter);
@@ -199,10 +203,12 @@ public class AdapterManagerTest {
         assertNull("Expect no adapter", am.getAdapter(data, ITestAdapter.class));
 
         final ServiceReference<AdapterFactory> ref = createServiceReference();
-        am.bindAdapterFactory(new MockAdapterFactory(), ref);
+        final AdapterFactory af = Mockito.mock(AdapterFactory.class);
+        Mockito.when(af.getAdapter(data, ITestAdapter.class)).thenReturn(Mockito.mock(ITestAdapter.class));
+        am.bindAdapterFactory(af, ref);
 
         final ServiceReference<AdapterFactory> ref2 = createServiceReference2();
-        am.bindAdapterFactory(new MockAdapterFactory(), ref2);
+        am.bindAdapterFactory(af, ref2);
 
         Object adapter = am.getAdapter(data, ITestAdapter.class);
         assertNotNull(adapter);
@@ -211,20 +217,27 @@ public class AdapterManagerTest {
 
     @Test
     public void testAdaptExtended2() throws Exception {
-        final ServiceReference<AdapterFactory> ref = createServiceReference();
-        am.bindAdapterFactory(new MockAdapterFactory(), ref);
-
-        final ServiceReference<AdapterFactory> ref2 = createServiceReference2();
-        am.bindAdapterFactory(new MockAdapterFactory(), ref2);
-
         TestSlingAdaptable data = new TestSlingAdaptable();
+        TestSlingAdaptable2 data2 = new TestSlingAdaptable2();
+
+        final AdapterFactory af1 = Mockito.mock(AdapterFactory.class);
+        Mockito.when(af1.getAdapter(data, ITestAdapter.class)).thenReturn(Mockito.mock(ITestAdapter.class));
+        Mockito.when(af1.getAdapter(data2, ITestAdapter.class)).thenReturn(Mockito.mock(ITestAdapter.class));
+        final AdapterFactory af2 = Mockito.mock(AdapterFactory.class);
+        Mockito.when(af2.getAdapter(data2, TestAdapter.class)).thenReturn(Mockito.mock(TestAdapter.class));
+        final ServiceReference<AdapterFactory> ref1 = createServiceReference();
+        final ServiceReference<AdapterFactory> ref2 = createServiceReference2();
+        Mockito.when(ref1.compareTo(ref2)).thenReturn(-1);
+        Mockito.when(ref2.compareTo(ref1)).thenReturn(1);
+        am.bindAdapterFactory(af1, ref1);
+        am.bindAdapterFactory(af2, ref2);
+
         Object adapter = am.getAdapter(data, ITestAdapter.class);
         assertNotNull(adapter);
         assertTrue(adapter instanceof ITestAdapter);
         adapter = am.getAdapter(data, TestAdapter.class);
         assertNull(adapter);
 
-        TestSlingAdaptable2 data2 = new TestSlingAdaptable2();
         adapter = am.getAdapter(data2, ITestAdapter.class);
         assertNotNull(adapter);
         assertTrue(adapter instanceof ITestAdapter);
