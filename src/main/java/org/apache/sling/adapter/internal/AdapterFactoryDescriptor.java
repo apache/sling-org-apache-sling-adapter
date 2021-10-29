@@ -33,13 +33,17 @@ public class AdapterFactoryDescriptor {
 
     private final String[] adapters;
 
+    private final String[] adaptables;
+
     private volatile ServiceRegistration<Adaption> adaption;
 
     public AdapterFactoryDescriptor(
             final AdapterFactory factory,
-            final String[] adapters) {
+            final String[] adapters,
+            final String[] adaptables) {
         this.factory = factory;
         this.adapters = adapters;
+        this.adaptables = adaptables;
     }
 
     public AdapterFactory getFactory() {
@@ -48,6 +52,10 @@ public class AdapterFactoryDescriptor {
 
     public String[] getAdapters() {
         return adapters;
+    }
+
+    public String[] getAdaptables() {
+        return adaptables;
     }
 
     public ServiceRegistration<Adaption> getAdaption() {

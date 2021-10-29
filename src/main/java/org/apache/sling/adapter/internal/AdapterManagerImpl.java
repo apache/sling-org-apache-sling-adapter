@@ -38,7 +38,6 @@ import org.apache.sling.api.adapter.AdapterManager;
 import org.apache.sling.api.adapter.SlingAdaptable;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -119,7 +118,7 @@ public class AdapterManagerImpl implements AdapterManager {
 
         if (descList != null && descList.size() > 0) {
             for (AdapterFactoryDescriptor desc : descList) {
-                final AdapterFactory factory = desc == null ? null : desc.getFactory();
+                final AdapterFactory factory = desc.getFactory();
 
                 // have the factory adapt the adaptable if the factory exists
                 if (factory != null) {
@@ -167,7 +166,7 @@ public class AdapterManagerImpl implements AdapterManager {
     /**
      * Bind a new adapter factory.
      */
-    @Reference(name="AdapterFactory", service=AdapterFactory.class,
+    @Reference(service=AdapterFactory.class, updated = "updatedAdapterFactory",
             cardinality=ReferenceCardinality.MULTIPLE, policy=ReferencePolicy.DYNAMIC)
     protected void bindAdapterFactory(final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
         registerAdapterFactory(factory, reference);
@@ -178,6 +177,14 @@ public class AdapterManagerImpl implements AdapterManager {
      */
     protected void unbindAdapterFactory(final ServiceReference<AdapterFactory> reference) {
         unregisterAdapterFactory(reference);
+    }
+
+    /**
+     * Modify a adapter factory.
+     */
+    protected void updatedAdapterFactory(final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
+        unregisterAdapterFactory(reference);
+        registerAdapterFactory(factory, reference);
     }
 
     // ---------- unit testing stuff only --------------------------------------
@@ -228,7 +235,7 @@ public class AdapterManagerImpl implements AdapterManager {
             }
         }
 
-        final AdapterFactoryDescriptor factoryDesc = new AdapterFactoryDescriptor(factory, adapters);
+        final AdapterFactoryDescriptor factoryDesc = new AdapterFactoryDescriptor(factory, adapters, adaptables);
 
         for (final String adaptable : adaptables) {
             AdapterFactoryDescriptorMap adfMap = null;
@@ -290,63 +297,43 @@ public class AdapterManagerImpl implements AdapterManager {
      * <code>reference</code> from the registry.
      */
     private void unregisterAdapterFactory(final ServiceReference<AdapterFactory> reference) {
-        final Converter converter = Converters.standardConverter();
-        final String[] adaptables = converter.convert(reference.getProperty(ADAPTABLE_CLASSES)).to(String[].class);
-        final String[] adapters = converter.convert(reference.getProperty(ADAPTER_CLASSES)).to(String[].class);
-
-        if (adaptables == null || adaptables.length == 0 || adapters == null || adapters.length == 0) {
-            return;
-        }
-
-        boolean factoriesModified = false;
-        AdapterFactoryDescriptorMap adfMap = null;
-
-        AdapterFactoryDescriptor removedDescriptor = null;
-        for (final String adaptable : adaptables) {
-            synchronized ( this.descriptors ) {
-                adfMap = this.descriptors.get(adaptable);
+        final List<AdapterFactoryDescriptorMap> list = new ArrayList<>();
+        synchronized ( this.descriptors ) {
+            for(final AdapterFactoryDescriptorMap map : this.descriptors.values()) {
+                list.add(map);
             }
-            if (adfMap != null) {
-                synchronized ( adfMap ) {
-                    AdapterFactoryDescriptor factoryDesc = adfMap.remove(reference);
-                    if (factoryDesc != null) {
-                        factoriesModified = true;
-                        // A single ServiceReference should correspond to a single Adaption service being registered
-                        // Since the code paths above does not fully guarantee it though, let's keep this check in place
-                        if (removedDescriptor != null && removedDescriptor != factoryDesc) {
-                            log.error("When unregistering reference {} got duplicate service descriptors {} and {}. Unregistration of {} services may be incomplete.",
-                                    new Object[] { reference, removedDescriptor, factoryDesc, Adaption.class.getName()} );
-                        }
-                        removedDescriptor = factoryDesc;
-                    }
+        }
+        AdapterFactoryDescriptor removedDescriptor = null;
+        for(final AdapterFactoryDescriptorMap map : list) {
+            synchronized (map ) {
+                final AdapterFactoryDescriptor factoryDesc = map.remove(reference);
+                if (factoryDesc != null) {
+                    removedDescriptor = factoryDesc;
                 }
             }
         }
 
-        // only remove cache if some adapter factories have actually been
-        // removed
-        if (factoriesModified) {
-            this.factoryCache.clear();
-        }
-
         // unregister adaption
         if (removedDescriptor != null) {
+            // only remove cache if some adapter factories have actually been
+            // removed
+            this.factoryCache.clear();
+
             removedDescriptor.getAdaption().unregister();
             if (log.isDebugEnabled()) {
                 log.debug("Unregistered service {} with {} : {} and {} : {}", new Object[] { Adaption.class.getName(),
-                        SlingConstants.PROPERTY_ADAPTABLE_CLASSES, Arrays.toString(adaptables),
-                        SlingConstants.PROPERTY_ADAPTER_CLASSES, Arrays.toString(adapters) });
+                        SlingConstants.PROPERTY_ADAPTABLE_CLASSES, Arrays.toString(removedDescriptor.getAdaptables()),
+                        SlingConstants.PROPERTY_ADAPTER_CLASSES, Arrays.toString(removedDescriptor.getAdapters()) });
             }
-        }
 
-        // send event
-        final EventAdmin localEA = this.eventAdmin;
-        if ( localEA != null ) {
-            final Dictionary<String, Object> props = new Hashtable<>();
-            props.put(SlingConstants.PROPERTY_ADAPTABLE_CLASSES, adaptables);
-            props.put(SlingConstants.PROPERTY_ADAPTER_CLASSES, adapters);
-            localEA.postEvent(new Event(SlingConstants.TOPIC_ADAPTER_FACTORY_REMOVED,
-                    props));
+            // send event
+            final EventAdmin localEA = this.eventAdmin;
+            if ( localEA != null ) {
+                final Dictionary<String, Object> props = new Hashtable<>();
+                props.put(SlingConstants.PROPERTY_ADAPTABLE_CLASSES, removedDescriptor.getAdaptables());
+                props.put(SlingConstants.PROPERTY_ADAPTER_CLASSES, removedDescriptor.getAdapters());
+                localEA.postEvent(new Event(SlingConstants.TOPIC_ADAPTER_FACTORY_REMOVED, props));
+            }
         }
     }
 
@@ -448,12 +435,8 @@ public class AdapterManagerImpl implements AdapterManager {
         // for each target class copy the entry to dest and put it in the list or create the list
         for (Map.Entry<String, List<AdapterFactoryDescriptor>> entry : scMap.entrySet()) {
 
-            List<AdapterFactoryDescriptor> factoryDescriptors = dest.get(entry.getKey());
+            final List<AdapterFactoryDescriptor> factoryDescriptors = dest.computeIfAbsent(entry.getKey(), id -> new ArrayList<>());
 
-            if (factoryDescriptors == null) {
-                factoryDescriptors = new ArrayList<>();
-                dest.put(entry.getKey(), factoryDescriptors);
-            }
             for (AdapterFactoryDescriptor descriptor : entry.getValue()) {
                 factoryDescriptors.add(descriptor);
             }

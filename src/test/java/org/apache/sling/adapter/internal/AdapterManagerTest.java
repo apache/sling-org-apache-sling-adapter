@@ -36,6 +36,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.packageadmin.ExportedPackage;
 import org.osgi.service.packageadmin.PackageAdmin;
 
@@ -92,8 +93,30 @@ public class AdapterManagerTest {
     }
 
     @Test
-    public void testBindAfterActivate() throws Exception {
+    public void testInvalidRegistrations() throws Exception {
+        ServiceReference<AdapterFactory> ref = createServiceReference(0, null, new String[] {TestAdapter.class.getName()});
+        am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
+        assertTrue("AdapterFactoryDescriptors must be empty", am.getFactories().isEmpty());
+
+        ref = createServiceReference(0, new String[0], new String[] {TestAdapter.class.getName()});
+        am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
+        assertTrue("AdapterFactoryDescriptors must be empty", am.getFactories().isEmpty());
+
+        ref = createServiceReference(0, new String[] {TestSlingAdaptable.class.getName()}, null);
+        am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
+        assertTrue("AdapterFactoryDescriptors must be empty", am.getFactories().isEmpty());
+
+        ref = createServiceReference(0, new String[] {TestSlingAdaptable.class.getName()}, new String[0]);
+        am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
+        assertTrue("AdapterFactoryDescriptors must be empty", am.getFactories().isEmpty());
+    }
+
+    @Test
+    public void testBindUnbind() throws Exception {
         final ServiceReference<AdapterFactory> ref = createServiceReference();
+        final ServiceRegistration<Adaption> registration = Mockito.mock(ServiceRegistration.class);
+        Mockito.when(ref.getBundle().getBundleContext().registerService(Mockito.eq(Adaption.class), 
+            Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any())).thenReturn(registration);
         am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
 
         // check that a service is registered
@@ -103,6 +126,7 @@ public class AdapterManagerTest {
         // expect the factory, but cache is empty
         assertNotNull("AdapterFactoryDescriptors must not be null", am.getFactories());
         assertEquals("AdapterFactoryDescriptors must contain one entry", 1, am.getFactories().size());
+        assertEquals(1, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
         assertTrue("AdapterFactory cache must be empty", am.getFactoryCache().isEmpty());
 
         Map<String, AdapterFactoryDescriptorMap> f = am.getFactories();
@@ -117,6 +141,30 @@ public class AdapterManagerTest {
         assertEquals(ITestAdapter.class.getName(), afd.getAdapters()[0]);
 
         assertNull(f.get(TestSlingAdaptable2.class.getName()));
+
+        Mockito.verify(registration, Mockito.never()).unregister();
+        am.unbindAdapterFactory(ref);
+        Mockito.verify(registration).unregister();
+        assertTrue(am.getFactories().get(TestSlingAdaptable.class.getName()).isEmpty());
+        assertTrue("AdapterFactory cache must be empty", am.getFactoryCache().isEmpty());
+    }
+
+    @Test
+    public void testBindModifiedUnbind() throws Exception {
+        ServiceReference<AdapterFactory> ref = createServiceReference();
+        final ServiceRegistration<Adaption> registration = Mockito.mock(ServiceRegistration.class);
+        Mockito.when(ref.getBundle().getBundleContext().registerService(Mockito.eq(Adaption.class), 
+            Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any())).thenReturn(registration);
+        am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
+
+        assertEquals("AdapterFactoryDescriptors must contain one entry", 1, am.getFactories().size());
+        assertEquals(1, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
+
+        Mockito.when(ref.getProperty(AdapterFactory.ADAPTABLE_CLASSES)).thenReturn(new String[] {TestSlingAdaptable2.class.getName()});
+        am.updatedAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
+        assertEquals("AdapterFactoryDescriptors must contain two entries", 2, am.getFactories().size());
+        assertEquals(0, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
+        assertEquals(1, am.getFactories().get(TestSlingAdaptable2.class.getName()).size());
     }
 
     @Test
