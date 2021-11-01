@@ -38,14 +38,13 @@ import org.apache.sling.api.adapter.AdapterManager;
 import org.apache.sling.api.adapter.SlingAdaptable;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.converter.Converter;
 import org.osgi.util.converter.Converters;
@@ -90,13 +89,7 @@ public class AdapterManagerImpl implements AdapterManager {
      */
     private final ConcurrentMap<String, Map<String, List<AdapterFactoryDescriptor>>> factoryCache = new ConcurrentHashMap<>();
 
-    /**
-     * The optional event admin
-     */
-    @Reference(cardinality=ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC)
-    private volatile EventAdmin eventAdmin;
-
-    private PackageAdmin packageAdmin;
+    private final PackageAdmin packageAdmin;
 
     // ---------- AdapterManager interface -------------------------------------
 
@@ -262,13 +255,6 @@ public class AdapterManagerImpl implements AdapterManager {
                     SlingConstants.PROPERTY_ADAPTABLE_CLASSES, Arrays.toString(adaptables),
                     SlingConstants.PROPERTY_ADAPTER_CLASSES, Arrays.toString(adapters) });
         }
-
-        // send event
-        final EventAdmin localEA = this.eventAdmin;
-        if ( localEA != null ) {
-            localEA.postEvent(new Event(SlingConstants.TOPIC_ADAPTER_FACTORY_ADDED,
-                    props));
-        }
     }
 
     static String getPackageName(String clazz) {
@@ -319,20 +305,19 @@ public class AdapterManagerImpl implements AdapterManager {
             // removed
             this.factoryCache.clear();
 
-            removedDescriptor.getAdaption().unregister();
+            final ServiceRegistration<Adaption> reg = removedDescriptor.getAdaption();
+            if ( reg != null ) {
+                removedDescriptor.setAdaption(null);
+                try {
+                   reg.unregister();
+                } catch ( final IllegalStateException ignore) {
+                    // ignore IAE on shutdown
+                } 
+            }
             if (log.isDebugEnabled()) {
                 log.debug("Unregistered service {} with {} : {} and {} : {}", new Object[] { Adaption.class.getName(),
                         SlingConstants.PROPERTY_ADAPTABLE_CLASSES, Arrays.toString(removedDescriptor.getAdaptables()),
                         SlingConstants.PROPERTY_ADAPTER_CLASSES, Arrays.toString(removedDescriptor.getAdapters()) });
-            }
-
-            // send event
-            final EventAdmin localEA = this.eventAdmin;
-            if ( localEA != null ) {
-                final Dictionary<String, Object> props = new Hashtable<>();
-                props.put(SlingConstants.PROPERTY_ADAPTABLE_CLASSES, removedDescriptor.getAdaptables());
-                props.put(SlingConstants.PROPERTY_ADAPTER_CLASSES, removedDescriptor.getAdapters());
-                localEA.postEvent(new Event(SlingConstants.TOPIC_ADAPTER_FACTORY_REMOVED, props));
             }
         }
     }
