@@ -19,12 +19,12 @@
 package org.apache.sling.adapter;
 
 /**
- * The <tt>Adaption</tt> is a marker interface which is registered as a service by the <tt>AdapterManager</tt> once a
- * certain <tt>AdapterFactory</tt> is available
+ * The <pre>Adaption</pre> is a marker interface which is registered as a service by the <pre>AdapterManager</pre> once a
+ * certain <pre>AdapterFactory</pre> is available
  * 
  * <p>
  * Its intended use is to make it simple for declarative service components to wait for a certain
- * <tt>AdapterFactory</tt> to be available
+ * <pre>AdapterFactory</pre> to be available
  * 
  * <p>
  * A usage sample is

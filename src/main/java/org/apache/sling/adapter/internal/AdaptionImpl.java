@@ -21,7 +21,7 @@ package org.apache.sling.adapter.internal;
 import org.apache.sling.adapter.Adaption;
 
 /**
- * The <tt>AdaptionImpl</tt> is a default, empty, implementation of the <tt>Adaption</tt> interface
+ * The <pre>AdaptionImpl</pre> is a default, empty, implementation of the <pre>Adaption</pre> interface
  *
  */
 public enum AdaptionImpl implements Adaption {
