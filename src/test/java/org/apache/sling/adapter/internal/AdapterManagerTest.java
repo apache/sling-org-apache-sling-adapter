@@ -18,11 +18,6 @@
  */
 package org.apache.sling.adapter.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Map;
 
 import org.apache.sling.adapter.Adaption;
@@ -30,7 +25,6 @@ import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.api.adapter.SlingAdaptable;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -40,12 +34,17 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.packageadmin.ExportedPackage;
 import org.osgi.service.packageadmin.PackageAdmin;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class AdapterManagerTest {
 
     private AdapterManagerImpl am;
 
-    @Before public void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         final PackageAdmin pa = Mockito.mock(PackageAdmin.class);
         final ExportedPackage ep = Mockito.mock(ExportedPackage.class);
         Mockito.when(pa.getExportedPackage(Mockito.anyString())).thenReturn(ep);
@@ -57,13 +56,15 @@ public class AdapterManagerTest {
      * Helper method to create a mock service reference
      */
     protected ServiceReference<AdapterFactory> createServiceReference() {
-        return createServiceReference(1, new String[]{ TestSlingAdaptable.class.getName() }, new String[]{ITestAdapter.class.getName()});
+        return createServiceReference(
+                1, new String[] {TestSlingAdaptable.class.getName()}, new String[] {ITestAdapter.class.getName()});
     }
 
     /**
      * Helper method to create a mock service reference
      */
-    protected ServiceReference<AdapterFactory> createServiceReference(final int ranking, final String[] adaptables, final String[] adapters) {
+    protected ServiceReference<AdapterFactory> createServiceReference(
+            final int ranking, final String[] adaptables, final String[] adapters) {
         final ServiceReference<AdapterFactory> ref = Mockito.mock(ServiceReference.class);
         Mockito.when(ref.getProperty(Constants.SERVICE_RANKING)).thenReturn(ranking);
         Mockito.when(ref.getProperty(AdapterFactory.ADAPTABLE_CLASSES)).thenReturn(adaptables);
@@ -77,12 +78,13 @@ public class AdapterManagerTest {
 
         return ref;
     }
-    
+
     /**
      * Helper method to create a mock service reference
      */
     protected ServiceReference<AdapterFactory> createServiceReference2() {
-        return createServiceReference(2, new String[]{ TestSlingAdaptable2.class.getName() }, new String[]{TestAdapter.class.getName()});
+        return createServiceReference(
+                2, new String[] {TestSlingAdaptable2.class.getName()}, new String[] {TestAdapter.class.getName()});
     }
 
     @Test
@@ -94,7 +96,8 @@ public class AdapterManagerTest {
 
     @Test
     public void testInvalidRegistrations() throws Exception {
-        ServiceReference<AdapterFactory> ref = createServiceReference(0, null, new String[] {TestAdapter.class.getName()});
+        ServiceReference<AdapterFactory> ref =
+                createServiceReference(0, null, new String[] {TestAdapter.class.getName()});
         am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
         assertTrue("AdapterFactoryDescriptors must be empty", am.getFactories().isEmpty());
 
@@ -115,18 +118,24 @@ public class AdapterManagerTest {
     public void testBindUnbind() throws Exception {
         final ServiceReference<AdapterFactory> ref = createServiceReference();
         final ServiceRegistration<Adaption> registration = Mockito.mock(ServiceRegistration.class);
-        Mockito.when(ref.getBundle().getBundleContext().registerService(Mockito.eq(Adaption.class), 
-            Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any())).thenReturn(registration);
+        Mockito.when(ref.getBundle()
+                        .getBundleContext()
+                        .registerService(Mockito.eq(Adaption.class), Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any()))
+                .thenReturn(registration);
         am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
 
         // check that a service is registered
-        Mockito.verify(ref.getBundle().getBundleContext()).registerService(Mockito.eq(Adaption.class), 
-                   Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any());
+        Mockito.verify(ref.getBundle().getBundleContext())
+                .registerService(Mockito.eq(Adaption.class), Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any());
 
         // expect the factory, but cache is empty
         assertNotNull("AdapterFactoryDescriptors must not be null", am.getFactories());
-        assertEquals("AdapterFactoryDescriptors must contain one entry", 1, am.getFactories().size());
-        assertEquals(1, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
+        assertEquals(
+                "AdapterFactoryDescriptors must contain one entry",
+                1,
+                am.getFactories().size());
+        assertEquals(
+                1, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
         assertTrue("AdapterFactory cache must be empty", am.getFactoryCache().isEmpty());
 
         Map<String, AdapterFactoryDescriptorMap> f = am.getFactories();
@@ -153,18 +162,30 @@ public class AdapterManagerTest {
     public void testBindModifiedUnbind() throws Exception {
         ServiceReference<AdapterFactory> ref = createServiceReference();
         final ServiceRegistration<Adaption> registration = Mockito.mock(ServiceRegistration.class);
-        Mockito.when(ref.getBundle().getBundleContext().registerService(Mockito.eq(Adaption.class), 
-            Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any())).thenReturn(registration);
+        Mockito.when(ref.getBundle()
+                        .getBundleContext()
+                        .registerService(Mockito.eq(Adaption.class), Mockito.eq(AdaptionImpl.INSTANCE), Mockito.any()))
+                .thenReturn(registration);
         am.bindAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
 
-        assertEquals("AdapterFactoryDescriptors must contain one entry", 1, am.getFactories().size());
-        assertEquals(1, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
+        assertEquals(
+                "AdapterFactoryDescriptors must contain one entry",
+                1,
+                am.getFactories().size());
+        assertEquals(
+                1, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
 
-        Mockito.when(ref.getProperty(AdapterFactory.ADAPTABLE_CLASSES)).thenReturn(new String[] {TestSlingAdaptable2.class.getName()});
+        Mockito.when(ref.getProperty(AdapterFactory.ADAPTABLE_CLASSES))
+                .thenReturn(new String[] {TestSlingAdaptable2.class.getName()});
         am.updatedAdapterFactory(Mockito.mock(AdapterFactory.class), ref);
-        assertEquals("AdapterFactoryDescriptors must contain two entries", 2, am.getFactories().size());
-        assertEquals(0, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
-        assertEquals(1, am.getFactories().get(TestSlingAdaptable2.class.getName()).size());
+        assertEquals(
+                "AdapterFactoryDescriptors must contain two entries",
+                2,
+                am.getFactories().size());
+        assertEquals(
+                0, am.getFactories().get(TestSlingAdaptable.class.getName()).size());
+        assertEquals(
+                1, am.getFactories().get(TestSlingAdaptable2.class.getName()).size());
     }
 
     @Test
@@ -248,8 +269,14 @@ public class AdapterManagerTest {
 
     @Test
     public void testAdaptMultipleAdapterFactories() throws Exception {
-        final ServiceReference<AdapterFactory> firstAdaptable = this.createServiceReference(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
-        final ServiceReference<AdapterFactory> secondAdaptable = this.createServiceReference(2, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
+        final ServiceReference<AdapterFactory> firstAdaptable =
+                this.createServiceReference(1, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), FirstImplementation.class.getName()
+                });
+        final ServiceReference<AdapterFactory> secondAdaptable =
+                this.createServiceReference(2, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), SecondImplementation.class.getName()
+                });
         Mockito.when(firstAdaptable.compareTo(secondAdaptable)).thenReturn(-1);
         Mockito.when(secondAdaptable.compareTo(firstAdaptable)).thenReturn(1);
 
@@ -264,25 +291,35 @@ public class AdapterManagerTest {
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
         assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, ParentInterface.class);
         assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for second implementation, service ranking 2, ",
+                adapter instanceof SecondImplementation);
 
         adapter = am.getAdapter(first, FirstImplementation.class);
         assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, SecondImplementation.class);
         assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for second implementation, service ranking 2, ",
+                adapter instanceof SecondImplementation);
     }
 
     @Test
     public void testAdaptMultipleAdapterFactoriesReverseOrder() throws Exception {
-        final ServiceReference<AdapterFactory> firstAdaptable = this.createServiceReference(2, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName()});
-        final ServiceReference<AdapterFactory> secondAdaptable = this.createServiceReference(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName()});
+        final ServiceReference<AdapterFactory> firstAdaptable = this.createServiceReference(
+                2, new String[] {AdapterObject.class.getName()}, new String[] {ParentInterface.class.getName()});
+        final ServiceReference<AdapterFactory> secondAdaptable = this.createServiceReference(
+                1, new String[] {AdapterObject.class.getName()}, new String[] {ParentInterface.class.getName()});
         Mockito.when(firstAdaptable.compareTo(secondAdaptable)).thenReturn(1);
         Mockito.when(secondAdaptable.compareTo(firstAdaptable)).thenReturn(-1);
 
@@ -297,14 +334,21 @@ public class AdapterManagerTest {
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
         assertNotNull("Did not get an adapter back for first implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 2, ", adapter instanceof FirstImplementation);
-
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 2, ",
+                adapter instanceof FirstImplementation);
     }
 
     @Test
     public void testAdaptMultipleAdapterFactoriesServiceRanking() throws Exception {
-        final ServiceReference<AdapterFactory> firstAdaptable = createServiceReference(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
-        final ServiceReference<AdapterFactory> secondAdaptable = createServiceReference(2, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
+        final ServiceReference<AdapterFactory> firstAdaptable =
+                createServiceReference(1, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), FirstImplementation.class.getName()
+                });
+        final ServiceReference<AdapterFactory> secondAdaptable =
+                createServiceReference(2, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), SecondImplementation.class.getName()
+                });
         Mockito.when(firstAdaptable.compareTo(secondAdaptable)).thenReturn(-1);
         Mockito.when(secondAdaptable.compareTo(firstAdaptable)).thenReturn(1);
 
@@ -318,22 +362,36 @@ public class AdapterManagerTest {
         am.bindAdapterFactory(new SecondImplementationAdapterFactory(), secondAdaptable);
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
-        assertNotNull("Did not get an adapter back for first implementation (from ParentInterface), service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertNotNull(
+                "Did not get an adapter back for first implementation (from ParentInterface), service ranking 1",
+                adapter);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(first, FirstImplementation.class);
         assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, SecondImplementation.class);
         assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for second implementation, service ranking 2, ",
+                adapter instanceof SecondImplementation);
     }
 
     @Test
     public void testAdaptMultipleAdapterFactoriesServiceRankingSecondHigherOrder() throws Exception {
-        final ServiceReference<AdapterFactory> firstAdaptable = createServiceReference(2, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
-        final ServiceReference<AdapterFactory> secondAdaptable = createServiceReference(1, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
+        final ServiceReference<AdapterFactory> firstAdaptable =
+                createServiceReference(2, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), FirstImplementation.class.getName()
+                });
+        final ServiceReference<AdapterFactory> secondAdaptable =
+                createServiceReference(1, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), SecondImplementation.class.getName()
+                });
         Mockito.when(firstAdaptable.compareTo(secondAdaptable)).thenReturn(1);
         Mockito.when(secondAdaptable.compareTo(firstAdaptable)).thenReturn(-1);
 
@@ -347,21 +405,36 @@ public class AdapterManagerTest {
         am.bindAdapterFactory(new SecondImplementationAdapterFactory(), secondAdaptable);
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
-        assertNotNull("Did not get an adapter back for second implementation (from ParentInterface), service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 1, ", adapter instanceof SecondImplementation);
+        assertNotNull(
+                "Did not get an adapter back for second implementation (from ParentInterface), service ranking 1",
+                adapter);
+        assertTrue(
+                "Did not get the correct adaptable back for second implementation, service ranking 1, ",
+                adapter instanceof SecondImplementation);
 
         adapter = am.getAdapter(first, FirstImplementation.class);
         assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, SecondImplementation.class);
         assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for second implementation, service ranking 2, ",
+                adapter instanceof SecondImplementation);
     }
 
-    @Test public void testAdaptMultipleAdapterFactoriesServiceRankingReverse() throws Exception {
-        final ServiceReference<AdapterFactory> firstAdaptable = this.createServiceReference(1, new String[]{AdapterObject.class.getName()},  new String[]{ ParentInterface.class.getName(), FirstImplementation.class.getName()});
-        final ServiceReference<AdapterFactory> secondAdaptable = this.createServiceReference(2, new String[]{ AdapterObject.class.getName() }, new String[]{ParentInterface.class.getName(), SecondImplementation.class.getName()});
+    @Test
+    public void testAdaptMultipleAdapterFactoriesServiceRankingReverse() throws Exception {
+        final ServiceReference<AdapterFactory> firstAdaptable =
+                this.createServiceReference(1, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), FirstImplementation.class.getName()
+                });
+        final ServiceReference<AdapterFactory> secondAdaptable =
+                this.createServiceReference(2, new String[] {AdapterObject.class.getName()}, new String[] {
+                    ParentInterface.class.getName(), SecondImplementation.class.getName()
+                });
         Mockito.when(firstAdaptable.compareTo(secondAdaptable)).thenReturn(-1);
         Mockito.when(secondAdaptable.compareTo(firstAdaptable)).thenReturn(1);
 
@@ -376,36 +449,35 @@ public class AdapterManagerTest {
         am.bindAdapterFactory(new FirstImplementationAdapterFactory(), firstAdaptable);
 
         Object adapter = am.getAdapter(first, ParentInterface.class);
-        assertNotNull("Did not get an adapter back for first implementation (from ParentInterface), service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertNotNull(
+                "Did not get an adapter back for first implementation (from ParentInterface), service ranking 1",
+                adapter);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(first, FirstImplementation.class);
         assertNotNull("Did not get an adapter back for first implementation, service ranking 1", adapter);
-        assertTrue("Did not get the correct adaptable back for first implementation, service ranking 1, ", adapter instanceof FirstImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for first implementation, service ranking 1, ",
+                adapter instanceof FirstImplementation);
 
         adapter = am.getAdapter(second, SecondImplementation.class);
         assertNotNull("Did not get an adapter back for second implementation, service ranking 2", adapter);
-        assertTrue("Did not get the correct adaptable back for second implementation, service ranking 2, ", adapter instanceof SecondImplementation);
+        assertTrue(
+                "Did not get the correct adaptable back for second implementation, service ranking 2, ",
+                adapter instanceof SecondImplementation);
     }
 
+    // ---------- Test Adaptable and Adapter Classes ---------------------------
 
-    //---------- Test Adaptable and Adapter Classes ---------------------------
+    public static class TestSlingAdaptable extends SlingAdaptable {}
 
-    public static class TestSlingAdaptable extends SlingAdaptable {
+    public static class TestSlingAdaptable2 extends TestSlingAdaptable {}
 
-    }
+    public static interface ITestAdapter {}
 
-    public static class TestSlingAdaptable2 extends TestSlingAdaptable {
-
-    }
-
-    public static interface ITestAdapter {
-
-    }
-
-    public static class TestAdapter {
-
-    }
+    public static class TestAdapter {}
 
     public class FirstImplementationAdapterFactory implements AdapterFactory {
 
@@ -445,14 +517,11 @@ public class AdapterManagerTest {
         }
     }
 
-    public static interface ParentInterface {
-    }
+    public static interface ParentInterface {}
 
-    public static class FirstImplementation implements ParentInterface {
-    }
+    public static class FirstImplementation implements ParentInterface {}
 
-    public static class SecondImplementation implements ParentInterface {
-    }
+    public static class SecondImplementation implements ParentInterface {}
 
     public enum Want {
 
@@ -483,5 +552,4 @@ public class AdapterManagerTest {
             return whatWeWant;
         }
     }
-
 }

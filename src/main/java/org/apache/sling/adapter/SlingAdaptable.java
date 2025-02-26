@@ -18,7 +18,6 @@
  */
 package org.apache.sling.adapter;
 
-
 /**
  * The <code>SlingAdaptable</code> class is an (abstract) default
  * implementation of the <code>Adaptable</code> interface. It just uses the
@@ -31,6 +30,4 @@ package org.apache.sling.adapter;
  * @deprecated Use the {@link org.apache.sling.api.adapter.SlingAdaptable} instead
  */
 @Deprecated
-public abstract class SlingAdaptable extends org.apache.sling.api.adapter.SlingAdaptable {
-
-}
+public abstract class SlingAdaptable extends org.apache.sling.api.adapter.SlingAdaptable {}
