@@ -18,9 +18,6 @@
  */
 package org.apache.sling.adapter.internal;
 
-import static org.apache.sling.api.adapter.AdapterFactory.ADAPTABLE_CLASSES;
-import static org.apache.sling.api.adapter.AdapterFactory.ADAPTER_CLASSES;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -51,17 +48,22 @@ import org.osgi.util.converter.Converters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.api.adapter.AdapterFactory.ADAPTABLE_CLASSES;
+import static org.apache.sling.api.adapter.AdapterFactory.ADAPTER_CLASSES;
+
 /**
  * The <code>AdapterManagerImpl</code> class implements the
  * {@link AdapterManager} interface and is registered as a service for that
  * interface to be used by any clients.
  *
  */
-@Component(service = AdapterManager.class, immediate=true,
-    property = {
+@Component(
+        service = AdapterManager.class,
+        immediate = true,
+        property = {
             Constants.SERVICE_DESCRIPTION + "=Sling Adapter Manager",
             Constants.SERVICE_VENDOR + "=The Apache Software Foundation"
-    })
+        })
 public class AdapterManagerImpl implements AdapterManager {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -87,7 +89,8 @@ public class AdapterManagerImpl implements AdapterManager {
      * {@link #getAdapterFactories(Class)} method. It is cleared
      * whenever an adapter factory is registered on unregistered.
      */
-    private final ConcurrentMap<String, Map<String, List<AdapterFactoryDescriptor>>> factoryCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Map<String, List<AdapterFactoryDescriptor>>> factoryCache =
+            new ConcurrentHashMap<>();
 
     private final PackageAdmin packageAdmin;
 
@@ -100,8 +103,7 @@ public class AdapterManagerImpl implements AdapterManager {
      * @see org.apache.sling.api.adapter.AdapterManager#getAdapter(java.lang.Object, java.lang.Class)
      */
     @Override
-    public <AdapterType> AdapterType getAdapter(final Object adaptable,
-            final Class<AdapterType> type) {
+    public <AdapterType> AdapterType getAdapter(final Object adaptable, final Class<AdapterType> type) {
 
         // get the adapter factories for the type of adaptable object
         final Map<String, List<AdapterFactoryDescriptor>> factories = getAdapterFactories(adaptable.getClass());
@@ -115,13 +117,11 @@ public class AdapterManagerImpl implements AdapterManager {
 
                 // have the factory adapt the adaptable if the factory exists
                 if (factory != null) {
-                    log.debug("Trying adapter factory {} to map {} to {}",
-                            new Object [] { factory, adaptable, type });
+                    log.debug("Trying adapter factory {} to map {} to {}", new Object[] {factory, adaptable, type});
 
                     AdapterType adaptedObject = factory.getAdapter(adaptable, type);
                     if (adaptedObject != null) {
-                        log.debug("Using adapter factory {} to map {} to {}",
-                                new Object [] { factory, adaptable, type });
+                        log.debug("Using adapter factory {} to map {} to {}", new Object[] {factory, adaptable, type});
                         return adaptedObject;
                     }
                 }
@@ -159,8 +159,11 @@ public class AdapterManagerImpl implements AdapterManager {
     /**
      * Bind a new adapter factory.
      */
-    @Reference(service=AdapterFactory.class, updated = "updatedAdapterFactory",
-            cardinality=ReferenceCardinality.MULTIPLE, policy=ReferencePolicy.DYNAMIC)
+    @Reference(
+            service = AdapterFactory.class,
+            updated = "updatedAdapterFactory",
+            cardinality = ReferenceCardinality.MULTIPLE,
+            policy = ReferencePolicy.DYNAMIC)
     protected void bindAdapterFactory(final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
         registerAdapterFactory(factory, reference);
     }
@@ -175,7 +178,8 @@ public class AdapterManagerImpl implements AdapterManager {
     /**
      * Modify a adapter factory.
      */
-    protected void updatedAdapterFactory(final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
+    protected void updatedAdapterFactory(
+            final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
         unregisterAdapterFactory(reference);
         registerAdapterFactory(factory, reference);
     }
@@ -206,11 +210,17 @@ public class AdapterManagerImpl implements AdapterManager {
      * Unregisters the {@link AdapterFactory} referred to by the service
      * <code>reference</code> from the registry.
      */
-    private void registerAdapterFactory(final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
+    private void registerAdapterFactory(
+            final AdapterFactory factory, final ServiceReference<AdapterFactory> reference) {
         final Converter converter = Converters.standardConverter();
-        final String[] adaptables = converter.convert(reference.getProperty(ADAPTABLE_CLASSES)).to(String[].class);
-        final String[] adapters = converter.convert(reference.getProperty(ADAPTER_CLASSES)).to(String[].class);
-        final boolean allowedInPrivatePackage = converter.convert(reference.getProperty(ALLOWED_IN_PRIVATE)).defaultValue(false).to(Boolean.class);
+        final String[] adaptables =
+                converter.convert(reference.getProperty(ADAPTABLE_CLASSES)).to(String[].class);
+        final String[] adapters =
+                converter.convert(reference.getProperty(ADAPTER_CLASSES)).to(String[].class);
+        final boolean allowedInPrivatePackage = converter
+                .convert(reference.getProperty(ALLOWED_IN_PRIVATE))
+                .defaultValue(false)
+                .to(Boolean.class);
 
         if (adaptables == null || adaptables.length == 0 || adapters == null || adapters.length == 0) {
             return;
@@ -218,13 +228,19 @@ public class AdapterManagerImpl implements AdapterManager {
 
         for (String clazz : adaptables) {
             if (!allowedInPrivatePackage && !checkPackage(packageAdmin, clazz)) {
-                log.warn("Adaptable class {} in factory service {} is not in an exported package.", clazz, reference.getProperty(Constants.SERVICE_ID));
+                log.warn(
+                        "Adaptable class {} in factory service {} is not in an exported package.",
+                        clazz,
+                        reference.getProperty(Constants.SERVICE_ID));
             }
         }
 
         for (String clazz : adapters) {
             if (!allowedInPrivatePackage && !checkPackage(packageAdmin, clazz)) {
-                log.warn("Adapter class {} in factory service {} is not in an exported package.", clazz, reference.getProperty(Constants.SERVICE_ID));
+                log.warn(
+                        "Adapter class {} in factory service {} is not in an exported package.",
+                        clazz,
+                        reference.getProperty(Constants.SERVICE_ID));
             }
         }
 
@@ -232,10 +248,10 @@ public class AdapterManagerImpl implements AdapterManager {
 
         for (final String adaptable : adaptables) {
             AdapterFactoryDescriptorMap adfMap = null;
-            synchronized ( this.descriptors ) {
+            synchronized (this.descriptors) {
                 adfMap = descriptors.computeIfAbsent(adaptable, key -> new AdapterFactoryDescriptorMap());
             }
-            synchronized ( adfMap ) {
+            synchronized (adfMap) {
                 adfMap.put(reference, factoryDesc);
             }
         }
@@ -248,12 +264,16 @@ public class AdapterManagerImpl implements AdapterManager {
         props.put(SlingConstants.PROPERTY_ADAPTABLE_CLASSES, adaptables);
         props.put(SlingConstants.PROPERTY_ADAPTER_CLASSES, adapters);
 
-        factoryDesc.setAdaption(reference.getBundle().getBundleContext().registerService(
-                Adaption.class, AdaptionImpl.INSTANCE, props));
+        factoryDesc.setAdaption(
+                reference.getBundle().getBundleContext().registerService(Adaption.class, AdaptionImpl.INSTANCE, props));
         if (log.isDebugEnabled()) {
-            log.debug("Registered service {} with {} : {} and {} : {}", new Object[] { Adaption.class.getName(),
-                    SlingConstants.PROPERTY_ADAPTABLE_CLASSES, Arrays.toString(adaptables),
-                    SlingConstants.PROPERTY_ADAPTER_CLASSES, Arrays.toString(adapters) });
+            log.debug("Registered service {} with {} : {} and {} : {}", new Object[] {
+                Adaption.class.getName(),
+                SlingConstants.PROPERTY_ADAPTABLE_CLASSES,
+                Arrays.toString(adaptables),
+                SlingConstants.PROPERTY_ADAPTER_CLASSES,
+                Arrays.toString(adapters)
+            });
         }
     }
 
@@ -284,14 +304,14 @@ public class AdapterManagerImpl implements AdapterManager {
      */
     private void unregisterAdapterFactory(final ServiceReference<AdapterFactory> reference) {
         final List<AdapterFactoryDescriptorMap> list = new ArrayList<>();
-        synchronized ( this.descriptors ) {
-            for(final AdapterFactoryDescriptorMap map : this.descriptors.values()) {
+        synchronized (this.descriptors) {
+            for (final AdapterFactoryDescriptorMap map : this.descriptors.values()) {
                 list.add(map);
             }
         }
         AdapterFactoryDescriptor removedDescriptor = null;
-        for(final AdapterFactoryDescriptorMap map : list) {
-            synchronized (map ) {
+        for (final AdapterFactoryDescriptorMap map : list) {
+            synchronized (map) {
                 final AdapterFactoryDescriptor factoryDesc = map.remove(reference);
                 if (factoryDesc != null) {
                     removedDescriptor = factoryDesc;
@@ -306,18 +326,22 @@ public class AdapterManagerImpl implements AdapterManager {
             this.factoryCache.clear();
 
             final ServiceRegistration<Adaption> reg = removedDescriptor.getAdaption();
-            if ( reg != null ) {
+            if (reg != null) {
                 removedDescriptor.setAdaption(null);
                 try {
-                   reg.unregister();
-                } catch ( final IllegalStateException ignore) {
+                    reg.unregister();
+                } catch (final IllegalStateException ignore) {
                     // ignore IAE on shutdown
-                } 
+                }
             }
             if (log.isDebugEnabled()) {
-                log.debug("Unregistered service {} with {} : {} and {} : {}", new Object[] { Adaption.class.getName(),
-                        SlingConstants.PROPERTY_ADAPTABLE_CLASSES, Arrays.toString(removedDescriptor.getAdaptables()),
-                        SlingConstants.PROPERTY_ADAPTER_CLASSES, Arrays.toString(removedDescriptor.getAdapters()) });
+                log.debug("Unregistered service {} with {} : {} and {} : {}", new Object[] {
+                    Adaption.class.getName(),
+                    SlingConstants.PROPERTY_ADAPTABLE_CLASSES,
+                    Arrays.toString(removedDescriptor.getAdaptables()),
+                    SlingConstants.PROPERTY_ADAPTER_CLASSES,
+                    Arrays.toString(removedDescriptor.getAdapters())
+                });
             }
         }
     }
@@ -362,12 +386,12 @@ public class AdapterManagerImpl implements AdapterManager {
 
         // AdapterFactories for this class
         AdapterFactoryDescriptorMap afdMap = null;
-        synchronized ( this.descriptors ) {
+        synchronized (this.descriptors) {
             afdMap = this.descriptors.get(clazz.getName());
         }
         if (afdMap != null) {
             final List<AdapterFactoryDescriptor> afdSet;
-            synchronized ( afdMap ) {
+            synchronized (afdMap) {
                 afdSet = new ArrayList<>(afdMap.values());
             }
             for (final AdapterFactoryDescriptor afd : afdSet) {
@@ -411,8 +435,7 @@ public class AdapterManagerImpl implements AdapterManager {
      * @param clazz The adaptable class whose adapter factories are considered
      *            for adding into <code>dest</code>.
      */
-    private void copyAdapterFactories(final Map<String, List<AdapterFactoryDescriptor>> dest,
-            final Class<?> clazz) {
+    private void copyAdapterFactories(final Map<String, List<AdapterFactoryDescriptor>> dest, final Class<?> clazz) {
 
         // get the adapter factories for the adaptable clazz
         final Map<String, List<AdapterFactoryDescriptor>> scMap = getAdapterFactories(clazz);
@@ -420,7 +443,8 @@ public class AdapterManagerImpl implements AdapterManager {
         // for each target class copy the entry to dest and put it in the list or create the list
         for (Map.Entry<String, List<AdapterFactoryDescriptor>> entry : scMap.entrySet()) {
 
-            final List<AdapterFactoryDescriptor> factoryDescriptors = dest.computeIfAbsent(entry.getKey(), id -> new ArrayList<>());
+            final List<AdapterFactoryDescriptor> factoryDescriptors =
+                    dest.computeIfAbsent(entry.getKey(), id -> new ArrayList<>());
 
             for (AdapterFactoryDescriptor descriptor : entry.getValue()) {
                 factoryDescriptors.add(descriptor);

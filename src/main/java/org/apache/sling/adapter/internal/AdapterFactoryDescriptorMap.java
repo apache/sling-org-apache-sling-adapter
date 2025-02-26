@@ -36,9 +36,7 @@ import org.osgi.framework.ServiceReference;
  * map) for such a given tuple is actually being used. If that first instance is
  * removed the eventual second instance may actually be used instead.
  */
-public class AdapterFactoryDescriptorMap extends
-        TreeMap<ServiceReference<AdapterFactory>, AdapterFactoryDescriptor> {
+public class AdapterFactoryDescriptorMap extends TreeMap<ServiceReference<AdapterFactory>, AdapterFactoryDescriptor> {
 
     private static final long serialVersionUID = 2L;
-
 }

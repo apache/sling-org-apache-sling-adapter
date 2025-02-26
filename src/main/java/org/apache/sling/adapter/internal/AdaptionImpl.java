@@ -25,6 +25,5 @@ import org.apache.sling.adapter.Adaption;
  *
  */
 public enum AdaptionImpl implements Adaption {
-
     INSTANCE;
 }

@@ -21,17 +21,15 @@ package org.apache.sling.adapter;
 /**
  * The <pre>Adaption</pre> is a marker interface which is registered as a service by the <pre>AdapterManager</pre> once a
  * certain <pre>AdapterFactory</pre> is available
- * 
+ *
  * <p>
  * Its intended use is to make it simple for declarative service components to wait for a certain
  * <pre>AdapterFactory</pre> to be available
- * 
+ *
  * <p>
  * A usage sample is
- * 
+ *
  * <code>@Reference(referenceInterface=Adaption.class,target="(&amp;(adaptables=com.myco.MyClass)(adapters=org.apache.sling.api.Resource))", name = "ignore", strategy = ReferenceStrategy.LOOKUP)</code>
  *
  */
-public interface Adaption {
-
-}
+public interface Adaption {}

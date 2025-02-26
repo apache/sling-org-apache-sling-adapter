@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements.  See the NOTICE file
@@ -31,18 +31,16 @@
     <version>2.2.1-SNAPSHOT</version>
 
     <name>Apache Sling Adapter Manager Implementation</name>
-    <description>
-        Bundle implementing the AdapterManager and provides a convenience
+    <description>Bundle implementing the AdapterManager and provides a convenience
         implementation of the Adaptable interface to make use of this
-        AdapterManager.
-    </description>
+        AdapterManager.</description>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-adapter.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-adapter.git</developerConnection>
+        <tag>HEAD</tag>
         <url>https://github.com/apache/sling-org-apache-sling-adapter.git</url>
-      <tag>HEAD</tag>
-  </scm>
+    </scm>
 
     <properties>
         <site.jira.version.id>12314288</site.jira.version.id>
@@ -50,20 +48,6 @@
         <sling.java.version>8</sling.java.version>
         <project.build.outputTimestamp>2025-02-26T00:00:00Z</project.build.outputTimestamp>
     </properties>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <excludePackageNames>
-                        org.apache.sling.adapter.internal
-                    </excludePackageNames>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
     <dependencies>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -148,4 +132,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <excludePackageNames>org.apache.sling.adapter.internal</excludePackageNames>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

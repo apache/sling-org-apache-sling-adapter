@@ -1,23 +1,28 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.adapter.internal;
 
-import static org.apache.sling.api.adapter.AdapterFactory.ADAPTABLE_CLASSES;
-import static org.apache.sling.api.adapter.AdapterFactory.ADAPTER_CLASSES;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,12 +48,6 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.sling.api.adapter.AdapterFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -70,9 +69,13 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.api.adapter.AdapterFactory.ADAPTABLE_CLASSES;
+import static org.apache.sling.api.adapter.AdapterFactory.ADAPTER_CLASSES;
+
 @SuppressWarnings("serial")
-@Component(service = Servlet.class,
-    property = {
+@Component(
+        service = Servlet.class,
+        property = {
             Constants.SERVICE_DESCRIPTION + "=Adapter Web Console Plugin",
             Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
             "felix.webconsole.label=adapters",
@@ -80,7 +83,7 @@ import org.slf4j.LoggerFactory;
             "felix.webconsole.css=/adapters/res/ui/adapters.css",
             "felix.webconsole.configprinter.modes=always",
             "felix.webconsole.category=Sling"
-    })
+        })
 public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrackerCustomizer, BundleListener {
 
     private static final String ADAPTER_CONDITION = "adapter.condition";
@@ -108,20 +111,29 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
 
     private void addServiceMetadata(final ServiceReference reference) {
         final Converter converter = Converters.standardConverter();
-        final String[] adaptables = converter.convert(reference.getProperty(ADAPTABLE_CLASSES)).to(String[].class);
-        final String[] adapters = converter.convert(reference.getProperty(ADAPTER_CLASSES)).to(String[].class);
-        final String condition = converter.convert(reference.getProperty(ADAPTER_CONDITION)).defaultValue("").to(String.class);
-        final boolean deprecated = converter.convert(reference.getProperty(ADAPTER_DEPRECATED)).defaultValue(false).to(Boolean.class);
+        final String[] adaptables =
+                converter.convert(reference.getProperty(ADAPTABLE_CLASSES)).to(String[].class);
+        final String[] adapters =
+                converter.convert(reference.getProperty(ADAPTER_CLASSES)).to(String[].class);
+        final String condition = converter
+                .convert(reference.getProperty(ADAPTER_CONDITION))
+                .defaultValue("")
+                .to(String.class);
+        final boolean deprecated = converter
+                .convert(reference.getProperty(ADAPTER_DEPRECATED))
+                .defaultValue(false)
+                .to(Boolean.class);
 
-        if ( adapters != null && adapters.length > 0 ) {
+        if (adapters != null && adapters.length > 0) {
             final List<AdaptableDescription> descriptions = new ArrayList<>(adaptables.length);
             for (final String adaptable : adaptables) {
-                descriptions.add(new AdaptableDescription(reference.getBundle(), adaptable, adapters, condition, deprecated));
+                descriptions.add(
+                        new AdaptableDescription(reference.getBundle(), adaptable, adapters, condition, deprecated));
             }
             synchronized (this) {
                 adapterServiceReferences.put(reference, descriptions);
                 update();
-            }    
+            }
         }
     }
 
@@ -154,30 +166,37 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
             final Enumeration<URL> files = bundle.getResources("SLING-INF/adapters.json");
             if (files != null) {
                 while (files.hasMoreElements()) {
-                    try (final Reader reader = new InputStreamReader(files.nextElement().openStream(), StandardCharsets.UTF_8)) {
+                    try (final Reader reader =
+                            new InputStreamReader(files.nextElement().openStream(), StandardCharsets.UTF_8)) {
                         final Map<String, Object> config = new HashMap<>();
                         config.put("org.apache.johnzon.supports-comments", true);
-                        final JsonObject obj = Json.createReaderFactory(config).createReader(reader).readObject();
-                        for (final Iterator<String> adaptableNames = obj.keySet().iterator(); adaptableNames.hasNext();) {
+                        final JsonObject obj = Json.createReaderFactory(config)
+                                .createReader(reader)
+                                .readObject();
+                        for (final Iterator<String> adaptableNames =
+                                        obj.keySet().iterator();
+                                adaptableNames.hasNext(); ) {
                             final String adaptableName = adaptableNames.next();
                             final JsonObject adaptable = obj.getJsonObject(adaptableName);
-                            for (final Iterator<String> conditions = adaptable.keySet().iterator(); conditions.hasNext();) {
+                            for (final Iterator<String> conditions =
+                                            adaptable.keySet().iterator();
+                                    conditions.hasNext(); ) {
                                 final String condition = conditions.next();
                                 String[] adapters;
                                 final Object value = adaptable.get(condition);
                                 if (value instanceof JsonArray) {
                                     adapters = toStringArray((JsonArray) value);
                                 } else {
-                                    adapters = new String[] { unbox(value).toString() };
+                                    adapters = new String[] {unbox(value).toString()};
                                 }
                                 descs.add(new AdaptableDescription(bundle, adaptableName, adapters, condition, false));
                             }
-                        }    
+                        }
                     }
                 }
             }
             if (!descs.isEmpty()) {
-                synchronized ( this ) {
+                synchronized (this) {
                     adapterBundles.put(bundle, descs);
                     update();
                 }
@@ -189,12 +208,11 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
         } catch (IllegalStateException e) {
             logger.debug("Unable to load adapter descriptors for bundle " + bundle);
         }
-
     }
 
     private Object unbox(Object o) {
         if (o instanceof JsonValue) {
-            switch (((JsonValue)o).getValueType()) {
+            switch (((JsonValue) o).getValueType()) {
                 case FALSE:
                     return false;
                 case TRUE:
@@ -202,7 +220,9 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
                 case NULL:
                     return null;
                 case NUMBER:
-                    return ((JsonNumber) o).isIntegral() ? ((JsonNumber)o).longValue() : ((JsonNumber) o).doubleValue();
+                    return ((JsonNumber) o).isIntegral()
+                            ? ((JsonNumber) o).longValue()
+                            : ((JsonNumber) o).doubleValue();
                 case STRING:
                     return ((JsonString) o).getString();
                 default:
@@ -221,7 +241,7 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
     }
 
     private void removeBundle(final Bundle bundle) {
-        synchronized ( this ) {
+        synchronized (this) {
             adapterBundles.remove(bundle);
             update();
         }
@@ -251,7 +271,8 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
         }
 
         this.bundleContext.addBundleListener(this);
-        final Filter filter = this.bundleContext.createFilter("(&(adaptables=*)(adapters=*)(" + Constants.OBJECTCLASS + "=" + AdapterFactory.SERVICE_NAME + "))");
+        final Filter filter = this.bundleContext.createFilter(
+                "(&(adaptables=*)(adapters=*)(" + Constants.OBJECTCLASS + "=" + AdapterFactory.SERVICE_NAME + "))");
         this.adapterTracker = new ServiceTracker(this.bundleContext, filter, this);
         this.adapterTracker.open();
     }
@@ -265,13 +286,13 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
     }
 
     @Override
-    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+            throws ServletException, IOException {
         if (req.getPathInfo().endsWith("/data.json")) {
             getJson(resp);
         } else {
             getHtml(resp);
         }
-
     }
 
     private void getJson(final HttpServletResponse resp) throws ServletException, IOException {
@@ -280,44 +301,34 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
             Map<String, Map<String, List<String>>> values = new HashMap<>();
             for (final AdaptableDescription desc : allAdaptables) {
                 final Map<String, List<String>> adaptableObj;
-                if (values.containsKey(desc.adaptable))
-                {
+                if (values.containsKey(desc.adaptable)) {
                     adaptableObj = values.get(desc.adaptable);
-                }
-                else {
+                } else {
                     adaptableObj = new HashMap<>();
                     values.put(desc.adaptable, adaptableObj);
                 }
                 for (final String adapter : desc.adapters) {
                     List<String> conditions = adaptableObj.get(desc.condition == null ? "" : desc.condition);
-                    if (conditions == null)
-                    {
+                    if (conditions == null) {
                         conditions = new ArrayList<>();
                         adaptableObj.put(desc.condition == null ? "" : desc.condition, conditions);
                     }
                     conditions.add(adapter);
                 }
-
             }
             final JsonObjectBuilder obj = Json.createObjectBuilder();
 
-            for (Map.Entry<String, Map<String, List<String>>> entry : values.entrySet())
-            {
+            for (Map.Entry<String, Map<String, List<String>>> entry : values.entrySet()) {
                 JsonObjectBuilder adaptable = Json.createObjectBuilder();
 
-                for (Map.Entry<String, List<String>> subEnty : entry.getValue().entrySet())
-                {
-                    if (subEnty.getValue().size() > 1)
-                    {
+                for (Map.Entry<String, List<String>> subEnty : entry.getValue().entrySet()) {
+                    if (subEnty.getValue().size() > 1) {
                         JsonArrayBuilder array = Json.createArrayBuilder();
-                        for (String condition : subEnty.getValue())
-                        {
+                        for (String condition : subEnty.getValue()) {
                             array.add(condition);
                         }
-                        adaptable.add(subEnty.getKey(),  array);
-                    }
-                    else
-                    {
+                        adaptable.add(subEnty.getKey(), array);
+                    } else {
                         adaptable.add(subEnty.getKey(), subEnty.getValue().get(0));
                     }
                 }
@@ -338,7 +349,8 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
         writer.println("<p class=\"statline ui-state-highlight\">${How to Use This Information}</p>");
         writer.println("<p>${usage}</p>");
         writer.println("<table class=\"adapters nicetable\">");
-        writer.println("<thead><tr><th class=\"header\">${Adaptable Class}</th><th class=\"header\">${Adapter Class}</th><th class=\"header\">${Condition}</th><th class=\"header\">${Deprecated}</th><th class=\"header\">${Providing Bundle}</th></tr></thead>");
+        writer.println(
+                "<thead><tr><th class=\"header\">${Adaptable Class}</th><th class=\"header\">${Adapter Class}</th><th class=\"header\">${Condition}</th><th class=\"header\">${Deprecated}</th><th class=\"header\">${Providing Bundle}</th></tr></thead>");
         String rowClass = "odd";
         for (final AdaptableDescription desc : allAdaptables) {
             writer.printf("<tr class=\"%s ui-state-default\"><td>", rowClass);
@@ -374,8 +386,9 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
             } else {
                 writer.print("<td></td>");
             }
-            writer.printf("<td><a href=\"${pluginRoot}/../bundles/%s\">%s (%s)</a></td>", desc.bundle.getBundleId(),
-                            desc.bundle.getSymbolicName(), desc.bundle.getBundleId());
+            writer.printf(
+                    "<td><a href=\"${pluginRoot}/../bundles/%s\">%s (%s)</a></td>",
+                    desc.bundle.getBundleId(), desc.bundle.getSymbolicName(), desc.bundle.getBundleId());
             writer.println("</tr>");
 
             if (rowClass.equals("odd")) {
@@ -422,8 +435,12 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
         private final Bundle bundle;
         private final boolean deprecated;
 
-        public AdaptableDescription(final Bundle bundle, final String adaptable, final String[] adapters,
-                        final String condition, boolean deprecated) {
+        public AdaptableDescription(
+                final Bundle bundle,
+                final String adaptable,
+                final String[] adapters,
+                final String condition,
+                boolean deprecated) {
             this.adaptable = adaptable;
             this.adapters = adapters;
             this.condition = condition;
@@ -434,24 +451,23 @@ public class AdapterWebConsolePlugin extends HttpServlet implements ServiceTrack
         @Override
         public String toString() {
             return "AdapterDescription [adaptable=" + this.adaptable + ", adapters=" + Arrays.toString(this.adapters)
-                            + ", condition=" + this.condition + ", bundle=" + this.bundle + ", deprecated= " + this.deprecated + "]";
+                    + ", condition=" + this.condition + ", bundle=" + this.bundle + ", deprecated= " + this.deprecated
+                    + "]";
         }
 
         @Override
         public int compareTo(final AdaptableDescription o) {
             int result = this.adaptable.compareTo(o.adaptable);
-            if ( result == 0 ) {
+            if (result == 0) {
                 result = this.condition.compareTo(o.condition);
-                if ( result == 0 ) {
+                if (result == 0) {
                     result = this.adapters.length - o.adapters.length;
-                    if ( result == 0 ) {
-                        result = (int)this.bundle.getBundleId() - (int)o.bundle.getBundleId();
+                    if (result == 0) {
+                        result = (int) this.bundle.getBundleId() - (int) o.bundle.getBundleId();
                     }
                 }
             }
             return result;
         }
-
     }
-
 }

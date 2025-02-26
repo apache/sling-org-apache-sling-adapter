@@ -18,8 +18,6 @@
  */
 package org.apache.sling.adapter.internal;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -28,26 +26,28 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import static org.junit.Assert.assertEquals;
+
 @RunWith(Parameterized.class)
 public class PackageNameTest {
-    
+
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {   
-                { "java.lang.Foo", "java.lang" },
-                { "noPackageName", "" },
-                { "", "" }
+        return Arrays.asList(new Object[][] {
+            {"java.lang.Foo", "java.lang"},
+            {"noPackageName", ""},
+            {"", ""}
         });
     }
-    
+
     private final String className;
     private final String packageName;
-    
+
     public PackageNameTest(String className, String packageName) {
         this.className = className;
         this.packageName = packageName;
     }
-    
+
     @Test
     public void testPackageName() {
         assertEquals(packageName, AdapterManagerImpl.getPackageName(className));

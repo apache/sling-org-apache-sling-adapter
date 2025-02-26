@@ -37,10 +37,7 @@ public class AdapterFactoryDescriptor {
 
     private volatile ServiceRegistration<Adaption> adaption;
 
-    public AdapterFactoryDescriptor(
-            final AdapterFactory factory,
-            final String[] adapters,
-            final String[] adaptables) {
+    public AdapterFactoryDescriptor(final AdapterFactory factory, final String[] adapters, final String[] adaptables) {
         this.factory = factory;
         this.adapters = adapters;
         this.adaptables = adaptables;
