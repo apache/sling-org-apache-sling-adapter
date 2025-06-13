@@ -29,7 +29,7 @@ package org.apache.sling.adapter;
  * <p>
  * A usage sample is
  *
- * <code>@Reference(referenceInterface=Adaption.class,target="(&amp;(adaptables=com.myco.MyClass)(adapters=org.apache.sling.api.Resource))", name = "ignore", strategy = ReferenceStrategy.LOOKUP)</code>
+ * <code>@Reference(referenceInterface=Adaption.class,name = "ignore",target="(&amp;(adapters=com.myco.MyClass)(adaptables=org.apache.sling.api.resource.Resource))")</code>
  *
  */
 public interface Adaption {}
