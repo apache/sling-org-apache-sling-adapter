@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -98,13 +99,40 @@ public class AdapterWebConsolePlugin extends HttpServlet
     @Reference
     private transient org.osgi.service.packageadmin.PackageAdmin packageAdmin;
 
-    private transient List<AdaptableDescription> allAdaptables;
-    private transient Map<ServiceReference<AdapterFactory>, List<AdaptableDescription>> adapterServiceReferences;
-    private transient Map<Bundle, List<AdaptableDescription>> adapterBundles;
+    private final transient AtomicReference<List<AdaptableDescription>> allAdaptables =
+            new AtomicReference<>(Collections.emptyList());
+    private final transient Map<ServiceReference<AdapterFactory>, List<AdaptableDescription>> adapterServiceReferences;
+    private final transient Map<Bundle, List<AdaptableDescription>> adapterBundles;
 
-    private transient ServiceTracker<AdapterFactory, Object> adapterTracker;
+    private final transient ServiceTracker<AdapterFactory, Object> adapterTracker;
 
-    private transient BundleContext bundleContext;
+    private final transient BundleContext bundleContext;
+
+    @Activate
+    public AdapterWebConsolePlugin(final BundleContext ctx) throws InvalidSyntaxException {
+        this.bundleContext = ctx;
+        this.adapterServiceReferences = new HashMap<>();
+        this.adapterBundles = new HashMap<>();
+        for (final Bundle bundle : this.bundleContext.getBundles()) {
+            if (bundle.getState() == Bundle.ACTIVE) {
+                addBundle(bundle);
+            }
+        }
+
+        this.bundleContext.addBundleListener(this);
+        final Filter filter = this.bundleContext.createFilter(
+                "(&(adaptables=*)(adapters=*)(" + Constants.OBJECTCLASS + "=" + AdapterFactory.SERVICE_NAME + "))");
+        this.adapterTracker = new ServiceTracker<>(this.bundleContext, filter, this);
+        this.adapterTracker.open();
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        this.bundleContext.removeBundleListener(this);
+        this.adapterTracker.close();
+        this.adapterServiceReferences.clear();
+        this.adapterBundles.clear();
+    }
 
     @Override
     public Object addingService(final ServiceReference<AdapterFactory> reference) {
@@ -239,33 +267,7 @@ public class AdapterWebConsolePlugin extends HttpServlet
             newList.addAll(list);
         }
         Collections.sort(newList);
-        allAdaptables = newList;
-    }
-
-    @Activate
-    protected void activate(final BundleContext ctx) throws InvalidSyntaxException {
-        this.bundleContext = ctx;
-        this.adapterServiceReferences = new HashMap<>();
-        this.adapterBundles = new HashMap<>();
-        for (final Bundle bundle : this.bundleContext.getBundles()) {
-            if (bundle.getState() == Bundle.ACTIVE) {
-                addBundle(bundle);
-            }
-        }
-
-        this.bundleContext.addBundleListener(this);
-        final Filter filter = this.bundleContext.createFilter(
-                "(&(adaptables=*)(adapters=*)(" + Constants.OBJECTCLASS + "=" + AdapterFactory.SERVICE_NAME + "))");
-        this.adapterTracker = new ServiceTracker<>(this.bundleContext, filter, this);
-        this.adapterTracker.open();
-    }
-
-    @Deactivate
-    protected void deactivate() {
-        this.bundleContext.removeBundleListener(this);
-        this.adapterTracker.close();
-        this.adapterServiceReferences = null;
-        this.adapterBundles = null;
+        allAdaptables.set(newList);
     }
 
     @Override
@@ -282,7 +284,7 @@ public class AdapterWebConsolePlugin extends HttpServlet
         resp.setContentType("application/json");
         try {
             Map<String, Map<String, List<String>>> values = new HashMap<>();
-            for (final AdaptableDescription desc : allAdaptables) {
+            for (final AdaptableDescription desc : allAdaptables.get()) {
                 final Map<String, List<String>> adaptableObj;
                 if (values.containsKey(desc.adaptable)) {
                     adaptableObj = values.get(desc.adaptable);
@@ -337,7 +339,7 @@ public class AdapterWebConsolePlugin extends HttpServlet
         writer.println(
                 "<thead><tr><th class=\"header\">${Adaptable Class}</th><th class=\"header\">${Adapter Class}</th><th class=\"header\">${Condition}</th><th class=\"header\">${Deprecated}</th><th class=\"header\">${Providing Bundle}</th></tr></thead>");
         String rowClass = "odd";
-        for (final AdaptableDescription desc : allAdaptables) {
+        for (final AdaptableDescription desc : allAdaptables.get()) {
             writer.printf("<tr class=\"%s ui-state-default\"><td>", rowClass);
             boolean packageExported = AdapterManagerImpl.checkPackage(packageAdmin, desc.adaptable);
             if (!packageExported) {
@@ -387,7 +389,7 @@ public class AdapterWebConsolePlugin extends HttpServlet
 
     public void printConfiguration(final PrintWriter pw) {
         pw.println("Current Apache Sling Adaptables:");
-        for (final AdaptableDescription desc : allAdaptables) {
+        for (final AdaptableDescription desc : allAdaptables.get()) {
             pw.printf("Adaptable: %s%n", desc.adaptable);
             if (desc.condition != null) {
                 pw.printf("Condition: %s%n", desc.condition);

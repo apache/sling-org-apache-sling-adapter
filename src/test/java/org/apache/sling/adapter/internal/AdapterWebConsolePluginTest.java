@@ -207,7 +207,7 @@ public class AdapterWebConsolePluginTest {
         final Bundle[] mockBundles = new Bundle[] {bundle1, bundle2};
         Mockito.doReturn(mockBundles).when(bundleContext).getBundles();
 
-        plugin.activate(bundleContext);
+        new AdapterWebConsolePlugin(bundleContext);
     }
 
     /**
