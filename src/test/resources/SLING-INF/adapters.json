@@ -1,0 +1,10 @@
+{
+  "org.apache.sling.Adaptable1" : {
+    "If the adaptable is an Adaptable1 or Adaptable2" : [
+      "org.apache.sling.Adaptable1",
+      "org.apache.sling.Adaptable2"
+    ],
+    "If the adaptable is an Adaptable3" : "org.apache.sling.Adaptable3",
+    "invalid, but here for code coverage" : 11
+  }
+}
