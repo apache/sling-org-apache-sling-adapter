@@ -28,27 +28,28 @@ import java.util.List;
 import jakarta.servlet.ServletException;
 import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
-import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.testing.mock.sling.junit5.SlingContext;
+import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
 import org.apache.sling.testing.mock.sling.servlet.MockSlingJakartaHttpServletRequest;
 import org.apache.sling.testing.mock.sling.servlet.MockSlingJakartaHttpServletResponse;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.Test.None;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  */
-public class AdapterWebConsolePluginTest {
+@ExtendWith(SlingContextExtension.class)
+class AdapterWebConsolePluginTest {
 
-    @Rule
     public final SlingContext context = new SlingContext(ResourceResolverType.JCR_MOCK);
 
     private AdapterWebConsolePlugin plugin;
@@ -57,8 +58,8 @@ public class AdapterWebConsolePluginTest {
     private org.osgi.service.packageadmin.PackageAdmin mockPackageAdmin;
 
     @SuppressWarnings("deprecation")
-    @Before
-    public void beforeEach() {
+    @BeforeEach
+    void beforeEach() {
         mockPackageAdmin = context.registerService(
                 org.osgi.service.packageadmin.PackageAdmin.class,
                 Mockito.mock(org.osgi.service.packageadmin.PackageAdmin.class));
@@ -69,18 +70,18 @@ public class AdapterWebConsolePluginTest {
     /**
      * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#addingService(org.osgi.framework.ServiceReference)}.
      */
-    @Test(expected = None.class)
-    public void testAddingService() {
+    @Test
+    void testAddingService() {
         // simulate serviceref with no config
         @SuppressWarnings("unchecked")
         ServiceReference<AdapterFactory> serviceRef1 = Mockito.mock(ServiceReference.class);
-        plugin.addingService(serviceRef1);
+        assertDoesNotThrow(() -> plugin.addingService(serviceRef1));
 
         // simulate serviceref with empty config
         @SuppressWarnings("unchecked")
         ServiceReference<AdapterFactory> serviceRef2 = Mockito.mock(ServiceReference.class);
         Mockito.doReturn(new String[0]).when(serviceRef2).getProperty(AdapterFactory.ADAPTER_CLASSES);
-        plugin.addingService(serviceRef2);
+        assertDoesNotThrow(() -> plugin.addingService(serviceRef2));
 
         // simulate serviceref with non-empty config
         @SuppressWarnings("unchecked")
@@ -91,14 +92,14 @@ public class AdapterWebConsolePluginTest {
         Mockito.doReturn(new String[] {"org.apache.sling.Adaptable1"})
                 .when(serviceRef3)
                 .getProperty(AdapterFactory.ADAPTABLE_CLASSES);
-        plugin.addingService(serviceRef3);
+        assertDoesNotThrow(() -> plugin.addingService(serviceRef3));
     }
 
     /**
      * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#bundleChanged(org.osgi.framework.BundleEvent)}.
      */
-    @Test(expected = None.class)
-    public void testBundleChanged() {
+    @Test
+    void testBundleChanged() {
         Bundle bundle1 = Mockito.mock(Bundle.class);
         Mockito.doReturn(Bundle.INSTALLED).when(bundle1).getState();
 
@@ -106,23 +107,23 @@ public class AdapterWebConsolePluginTest {
         BundleEvent event1 = Mockito.mock(BundleEvent.class);
         Mockito.doReturn(bundle1).when(event1).getBundle();
         Mockito.doReturn(BundleEvent.STOPPED).when(event1).getType();
-        plugin.bundleChanged(event1);
+        assertDoesNotThrow(() -> plugin.bundleChanged(event1));
 
         // bundle started event
         BundleEvent event2 = Mockito.mock(BundleEvent.class);
         Mockito.doReturn(bundle1).when(event2).getBundle();
         Mockito.doReturn(BundleEvent.STARTED).when(event2).getType();
-        plugin.bundleChanged(event2);
+        assertDoesNotThrow(() -> plugin.bundleChanged(event2));
 
         // bundle other event
         BundleEvent event3 = Mockito.mock(BundleEvent.class);
         Mockito.doReturn(bundle1).when(event3).getBundle();
         Mockito.doReturn(BundleEvent.UPDATED).when(event3).getType();
-        plugin.bundleChanged(event3);
+        assertDoesNotThrow(() -> plugin.bundleChanged(event3));
     }
 
-    @Test(expected = None.class)
-    public void testBundleChangedWithAdaptersJson() throws IOException {
+    @Test
+    void testBundleChangedWithAdaptersJson() throws IOException {
         Bundle bundle1 = Mockito.mock(Bundle.class);
         Mockito.doReturn(Bundle.ACTIVE).when(bundle1).getState();
 
@@ -135,11 +136,11 @@ public class AdapterWebConsolePluginTest {
         BundleEvent event1 = Mockito.mock(BundleEvent.class);
         Mockito.doReturn(bundle1).when(event1).getBundle();
         Mockito.doReturn(BundleEvent.STARTED).when(event1).getType();
-        plugin.bundleChanged(event1);
+        assertDoesNotThrow(() -> plugin.bundleChanged(event1));
     }
 
-    @Test(expected = None.class)
-    public void testBundleChangedWithInvalidAdaptersJson() throws IOException {
+    @Test
+    void testBundleChangedWithInvalidAdaptersJson() throws IOException {
         Bundle bundle1 = Mockito.mock(Bundle.class);
         Mockito.doReturn(Bundle.ACTIVE).when(bundle1).getState();
 
@@ -152,14 +153,14 @@ public class AdapterWebConsolePluginTest {
         BundleEvent event1 = Mockito.mock(BundleEvent.class);
         Mockito.doReturn(bundle1).when(event1).getBundle();
         Mockito.doReturn(BundleEvent.STARTED).when(event1).getType();
-        plugin.bundleChanged(event1);
+        assertDoesNotThrow(() -> plugin.bundleChanged(event1));
     }
 
     /**
      * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#modifiedService(org.osgi.framework.ServiceReference, java.lang.Object)}.
      */
-    @Test(expected = None.class)
-    public void testModifiedService() {
+    @Test
+    void testModifiedService() {
         // simulate serviceref with non-empty config
         @SuppressWarnings("unchecked")
         ServiceReference<AdapterFactory> serviceRef3 = Mockito.mock(ServiceReference.class);
@@ -170,14 +171,14 @@ public class AdapterWebConsolePluginTest {
                 .when(serviceRef3)
                 .getProperty(AdapterFactory.ADAPTABLE_CLASSES);
         Object mockSvc = new Object();
-        plugin.modifiedService(serviceRef3, mockSvc);
+        assertDoesNotThrow(() -> plugin.modifiedService(serviceRef3, mockSvc));
     }
 
     /**
      * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#removedService(org.osgi.framework.ServiceReference, java.lang.Object)}.
      */
-    @Test(expected = None.class)
-    public void testRemovedService() {
+    @Test
+    void testRemovedService() {
         // simulate serviceref with non-empty config
         @SuppressWarnings("unchecked")
         ServiceReference<AdapterFactory> serviceRef3 = Mockito.mock(ServiceReference.class);
@@ -189,14 +190,14 @@ public class AdapterWebConsolePluginTest {
                 .getProperty(AdapterFactory.ADAPTABLE_CLASSES);
         plugin.addingService(serviceRef3);
         Object mockSvc = new Object();
-        plugin.removedService(serviceRef3, mockSvc);
+        assertDoesNotThrow(() -> plugin.removedService(serviceRef3, mockSvc));
     }
 
     /**
-     * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#activate(org.osgi.framework.BundleContext)}.
+     * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#AdapterWebConsolePlugin(org.osgi.framework.BundleContext)}.
      */
-    @Test(expected = None.class)
-    public void testActivate() throws InvalidSyntaxException {
+    @Test
+    void testActivate() {
         final BundleContext bundleContext = Mockito.spy(context.bundleContext());
 
         // mock some deployed bundles
@@ -207,15 +208,15 @@ public class AdapterWebConsolePluginTest {
         final Bundle[] mockBundles = new Bundle[] {bundle1, bundle2};
         Mockito.doReturn(mockBundles).when(bundleContext).getBundles();
 
-        new AdapterWebConsolePlugin(bundleContext);
+        assertDoesNotThrow(() -> new AdapterWebConsolePlugin(bundleContext));
     }
 
     /**
      * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#deactivate()}.
      */
-    @Test(expected = None.class)
-    public void testDeactivate() {
-        plugin.deactivate();
+    @Test
+    void testDeactivate() {
+        assertDoesNotThrow(() -> plugin.deactivate());
     }
 
     /**
@@ -223,7 +224,7 @@ public class AdapterWebConsolePluginTest {
      */
     @SuppressWarnings("deprecation")
     @Test
-    public void testDoGetWithHtmlOutput() throws ServletException, IOException {
+    void testDoGetWithHtmlOutput() throws ServletException, IOException {
         // simulate an exported package
         org.osgi.service.packageadmin.ExportedPackage mockExportedPackage =
                 Mockito.mock(org.osgi.service.packageadmin.ExportedPackage.class);
@@ -234,7 +235,7 @@ public class AdapterWebConsolePluginTest {
     }
 
     @Test
-    public void testDoGetWithJsonOutput() throws ServletException, IOException {
+    void testDoGetWithJsonOutput() throws ServletException, IOException {
         final String outputAsString = doGet("/data.json");
         assertNotNull(outputAsString);
     }
@@ -301,7 +302,7 @@ public class AdapterWebConsolePluginTest {
      * Test method for {@link org.apache.sling.adapter.internal.AdapterWebConsolePlugin#printConfiguration(java.io.PrintWriter)}.
      */
     @Test
-    public void testPrintConfiguration() {
+    void testPrintConfiguration() {
         mockAdapters();
 
         StringWriter sw = new StringWriter();
@@ -316,7 +317,7 @@ public class AdapterWebConsolePluginTest {
      * org.apache.sling.adapter.internal.AdapterWebConsolePlugin#getResource(java.lang.String)}.
      */
     @Test
-    public void testGetResource() throws SecurityException, IllegalArgumentException {
+    void testGetResource() throws SecurityException, IllegalArgumentException {
         final URL value1 = ReflectionTools.invokeMethodWithReflection(
                 plugin, "getResource", new Class[] {String.class}, URL.class, new Object[] {"/invalid"});
         assertNull(value1);
