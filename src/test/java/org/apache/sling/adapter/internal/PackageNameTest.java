@@ -18,38 +18,24 @@
  */
 package org.apache.sling.adapter.internal;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(Parameterized.class)
-public class PackageNameTest {
+class PackageNameTest {
 
-    @Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-            {"java.lang.Foo", "java.lang"},
-            {"noPackageName", ""},
-            {"", ""}
-        });
+    protected static Stream<Arguments> testPackageNameArgs() {
+        return Stream.of(
+                Arguments.of("java.lang.Foo", "java.lang"), Arguments.of("noPackageName", ""), Arguments.of("", ""));
     }
 
-    private final String className;
-    private final String packageName;
-
-    public PackageNameTest(String className, String packageName) {
-        this.className = className;
-        this.packageName = packageName;
-    }
-
-    @Test
-    public void testPackageName() {
+    @ParameterizedTest
+    @MethodSource(value = "testPackageNameArgs")
+    void testPackageName(String className, String packageName) {
         assertEquals(packageName, AdapterManagerImpl.getPackageName(className));
     }
 }
