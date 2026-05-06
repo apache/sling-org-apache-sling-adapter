@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>org.apache.sling.adapter</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
 
     <name>Apache Sling Adapter Manager Implementation</name>
     <description>Bundle implementing the AdapterManager and provides a convenience
@@ -38,7 +38,7 @@
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-adapter.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-adapter.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>org.apache.sling.adapter-3.0.0</tag>
         <url>https://github.com/apache/sling-org-apache-sling-adapter.git</url>
     </scm>
 
@@ -46,7 +46,7 @@
         <site.jira.version.id>12314288</site.jira.version.id>
         <site.javadoc.exclude>**.impl.**</site.javadoc.exclude>
         <sling.java.version>17</sling.java.version>
-        <project.build.outputTimestamp>2025-03-05T17:39:32Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-05-06T19:15:26Z</project.build.outputTimestamp>
     </properties>
     <dependencies>
         <!-- JetBrains annotations for null-analysis (SLING-7798) -->
